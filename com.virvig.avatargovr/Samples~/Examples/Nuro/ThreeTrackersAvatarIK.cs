@@ -59,19 +59,6 @@ namespace AvatarGoVR
 
             m_LastStateAnimator = m_Animator.enabled;
             m_Animator.enabled = false;
-        }
-        public void UnbindAvatarFromIK()
-        {
-            m_Animator.enabled = m_LastStateAnimator;
-            m_LastBoundAvatar = null;
-            m_Animator = null;
-        }
-
-        public void Calibrate(IkInfo ikInfo)
-        {
-            // Calibrate Avatar Height
-            float heightScale = ikInfo.HeadPosition.y / EyesHeight;
-            transform.localScale = new Vector3(heightScale, heightScale, heightScale);
 
             MotionMatchingController = new MotionMatchingController
             {
@@ -93,7 +80,6 @@ namespace AvatarGoVR
             MotionMatchingSkinnedMeshRenderer.Enable();
             MotionMatchingSkinnedMeshRenderer.Init();
 
-            // Set every time because Motion Matching Skinned Mesh Renderer is a MonoBehaviour shared by different animation providers
             if (MotionMatchingSkinnedMeshRenderer.MotionMatching == null ||
                 MotionMatchingSkinnedMeshRenderer.MotionMatching != MotionMatchingController)
             {
@@ -101,13 +87,25 @@ namespace AvatarGoVR
                 MotionMatchingSkinnedMeshRenderer.Enable();
             }
 
-            float3 bodyOffset = new float3(0.0f, -0.15f, -0.15f);
-            float3 bodyCenter = (float3)ikInfo.HeadPosition + math.mul(ikInfo.HeadRotation, bodyOffset);
-            VRCharacterController.Update(bodyCenter, ikInfo.HeadRotation);
-
             Transform[] skeleton = GetSkeleton();
 
             m_FBIK.Init(skeleton, m_DefaultPose);
+        }
+        public void UnbindAvatarFromIK()
+        {
+            m_Animator.enabled = m_LastStateAnimator;
+            m_LastBoundAvatar = null;
+            m_Animator = null;
+        }
+
+        public void Calibrate(IkInfo ikInfo)
+        {
+            // Calibrate Avatar Height
+            float heightScale = ikInfo.HeadPosition.y / EyesHeight;
+            transform.localScale = new Vector3(heightScale, heightScale, heightScale);
+
+            PlayerPrefs.SetFloat("heightScale", heightScale);
+
             m_WasCalibrated = true;
         }
 
@@ -120,7 +118,12 @@ namespace AvatarGoVR
 
             if (!m_WasCalibrated)
             {
-                return;
+                if (PlayerPrefs.HasKey("heightScale"))
+                {
+                    float heightScale = PlayerPrefs.GetFloat("heightScale");
+                    transform.localScale = new Vector3(heightScale, heightScale, heightScale);
+                    m_WasCalibrated = true;
+                }
             }
 
             m_DoUpdate = true;

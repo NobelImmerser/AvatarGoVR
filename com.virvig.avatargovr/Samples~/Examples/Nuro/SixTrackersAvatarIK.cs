@@ -1,6 +1,7 @@
 using UnityEngine;
 using Nuro.VRWeb.Core.Avatar;
 using Unity.Mathematics;
+using System;
 
 namespace AvatarGoVR
 {
@@ -65,9 +66,27 @@ namespace AvatarGoVR
 
         public void Calibrate(IkInfo ikInfo)
         {
+            InternalCalibrate(ikInfo, true);
+        }
+
+        private void InternalCalibrate(IkInfo ikInfo, bool force)
+        {
             // Calibrate Avatar Height
-            float heightScale = ikInfo.HeadPosition.y / EyesHeight;
-            transform.localScale = new Vector3(heightScale, heightScale, heightScale);
+            if (force)
+            {
+                float heightScale = ikInfo.HeadPosition.y / EyesHeight;
+                transform.localScale = new Vector3(heightScale, heightScale, heightScale);
+                PlayerPrefs.SetFloat("heightScale", heightScale);
+            }
+            else if (PlayerPrefs.HasKey("heightScale"))
+            {
+                float heightScale = PlayerPrefs.GetFloat("heightScale");
+                transform.localScale = new Vector3(heightScale, heightScale, heightScale);
+            }
+            else
+            {
+                return;
+            }
 
             HumanBodyBones[] topology = GetTopology();
             Transform[] skeleton = GetSkeleton();
@@ -94,14 +113,74 @@ namespace AvatarGoVR
                 };
             }
 
-            m_HeadCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.Head).position, ikInfo.HeadPosition, ikInfo.HeadRotation);
-            m_HipsCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.Hips).position, ikInfo.HipsPosition, ikInfo.HipsRotation);
-            m_LeftHandCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.LeftHand).position, ikInfo.LeftHandPosition, ikInfo.LeftHandRotation);
-            m_RightHandCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.RightHand).position, ikInfo.RightHandPosition, ikInfo.RightHandRotation);
-            m_LeftFootCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.LeftFoot).position, ikInfo.LeftFootPosition, ikInfo.LeftFootRotation);
-            m_RightFootCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.RightFoot).position, ikInfo.RightFootPosition, ikInfo.RightFootRotation);
+            if (force)
+            {
+                m_HeadCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.Head).position, ikInfo.HeadPosition, ikInfo.HeadRotation);
+                m_HipsCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.Hips).position, ikInfo.HipsPosition, ikInfo.HipsRotation);
+                m_LeftHandCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.LeftHand).position, ikInfo.LeftHandPosition, ikInfo.LeftHandRotation);
+                m_RightHandCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.RightHand).position, ikInfo.RightHandPosition, ikInfo.RightHandRotation);
+                m_LeftFootCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.LeftFoot).position, ikInfo.LeftFootPosition, ikInfo.LeftFootRotation);
+                m_RightFootCalibration = CalibrateTracker(SearchJoint(HumanBodyBones.RightFoot).position, ikInfo.RightFootPosition, ikInfo.RightFootRotation);
+                Utils.SetPlayerPrefsPose("Head", m_HeadCalibration.LocalOffset, m_HeadCalibration.InvInitialRot);
+                Utils.SetPlayerPrefsPose("Hips", m_HipsCalibration.LocalOffset, m_HipsCalibration.InvInitialRot);
+                Utils.SetPlayerPrefsPose("LeftHand", m_LeftHandCalibration.LocalOffset, m_LeftHandCalibration.InvInitialRot);
+                Utils.SetPlayerPrefsPose("RightHand", m_RightHandCalibration.LocalOffset, m_RightHandCalibration.InvInitialRot);
+                Utils.SetPlayerPrefsPose("LeftFoot", m_LeftFootCalibration.LocalOffset, m_LeftFootCalibration.InvInitialRot);
+                Utils.SetPlayerPrefsPose("RightFoot", m_RightFootCalibration.LocalOffset, m_RightFootCalibration.InvInitialRot);
+            }
+            else
+            {
+                bool allSet = true;
+                if (PlayerPrefs.HasKey("Head_pos_x"))
+                {
+                    (Vector3 pos, Quaternion rot) = Utils.GetPlayerPrefsPose("Head");
+                    m_HeadCalibration.LocalOffset = pos;
+                    m_HeadCalibration.InvInitialRot = rot;
+                }
+                else allSet = false;
+                if (PlayerPrefs.HasKey("Hips_pos_x"))
+                {
+                    (Vector3 pos, Quaternion rot) = Utils.GetPlayerPrefsPose("Hips");
+                    m_HipsCalibration.LocalOffset = pos;
+                    m_HipsCalibration.InvInitialRot = rot;
+                }
+                else allSet = false;
+                if (PlayerPrefs.HasKey("LeftHand_pos_x"))
+                {
+                    (Vector3 pos, Quaternion rot) = Utils.GetPlayerPrefsPose("LeftHand");
+                    m_LeftHandCalibration.LocalOffset = pos;
+                    m_LeftHandCalibration.InvInitialRot = rot;
+                }
+                else allSet = false;
+                if (PlayerPrefs.HasKey("RightHand_pos_x"))
+                {
+                    (Vector3 pos, Quaternion rot) = Utils.GetPlayerPrefsPose("RightHand");
+                    m_RightHandCalibration.LocalOffset = pos;
+                    m_RightHandCalibration.InvInitialRot = rot;
+                }
+                else allSet = false;
+                if (PlayerPrefs.HasKey("LeftFoot_pos_x"))
+                {
+                    (Vector3 pos, Quaternion rot) = Utils.GetPlayerPrefsPose("LeftFoot");
+                    m_LeftFootCalibration.LocalOffset = pos;
+                    m_LeftFootCalibration.InvInitialRot = rot;
+                }
+                else allSet = false;
+                if (PlayerPrefs.HasKey("RightFoot_pos_x"))
+                {
+                    (Vector3 pos, Quaternion rot) = Utils.GetPlayerPrefsPose("RightFoot");
+                    m_RightFootCalibration.LocalOffset = pos;
+                    m_RightFootCalibration.InvInitialRot = rot;
+                }
+                else allSet = false;
+                if (!allSet)
+                {
+                    return;
+                }
+            }
 
             m_FBIK.Init(skeleton, m_DefaultPose);
+
             m_WasCalibrated = true;
         }
 
@@ -114,7 +193,11 @@ namespace AvatarGoVR
 
             if (!m_WasCalibrated)
             {
-                return;
+                InternalCalibrate(ikInfo, false);
+                if (!m_WasCalibrated)
+                {
+                    return;
+                }
             }
 
             m_DoUpdate = true;
