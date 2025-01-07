@@ -1,11 +1,17 @@
 {
     "name": "ViRVIG.AvatarGoVR",
+    "rootNamespace": "",
     "references": [
         "Unity.Burst",
-		"Unity.Mathematics",
-		"Unity.InputSystem",
-		"Unity.XR.OpenXR",
-		"Unity.XR.CoreUtils"
+        "Unity.Mathematics"
     ],
-    "allowUnsafeCode": true
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

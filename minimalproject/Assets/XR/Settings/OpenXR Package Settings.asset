@@ -80,7 +80,6 @@ MonoBehaviour:
   - {fileID: 7231810884130183365}
   - {fileID: -5672744520220044438}
   - {fileID: 5646726965974855549}
-  - {fileID: 4394562724514431104}
   - {fileID: 2285388713980421223}
   - {fileID: -4708201254270131036}
   - {fileID: 850026265384928708}
@@ -275,6 +274,7 @@ MonoBehaviour:
   m_Name: HTCViveTrackerProfile Standalone
   m_EditorClassIdentifier: 
   m_enabled: 0
+  <failedInitialization>k__BackingField: 0
   nameUi: HTC Vive Tracker Profile
   version: 0.0.1
   featureIdInternal: com.jlpm.openxr.feature.input.htcvivetracker

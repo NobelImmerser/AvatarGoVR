@@ -6,7 +6,6 @@ using Unity.Mathematics;
 using MotionMatching;
 
 using TrajectoryFeature = MotionMatching.MotionMatchingData.TrajectoryFeature;
-using static AvatarGoVR.DeviceManager;
 
 public class VRCharacterController : MotionMatchingCharacterController
 {
@@ -232,7 +231,7 @@ public class VRCharacterController : MotionMatchingCharacterController
         public int PreviousAngularVelocitiesIndex;
         public int NumberPastFrames = 1;
         // --------------------------------------------------------------------------
-        
+
         public Tracker(VRCharacterController controller)
         {
             Controller = controller;
