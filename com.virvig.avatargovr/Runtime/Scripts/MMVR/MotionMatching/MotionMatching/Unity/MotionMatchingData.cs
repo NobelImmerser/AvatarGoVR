@@ -64,7 +64,7 @@ namespace MotionMatching
                 PoseSerializer serializer = new PoseSerializer();
                 if (!serializer.Deserialize(GetAssetPath(), name, this, out PoseSet))
                 {
-                    Debug.LogError("Failed to read pose set. Creating it in runtime instead.");
+                    Debug.LogWarning("Failed to read pose set. Creating it in runtime instead.");
                     ImportPoseSet();
 #if UNITY_EDITOR
                     PROFILE.BEGIN_SAMPLE_PROFILING("Pose Serialize");
@@ -102,7 +102,7 @@ namespace MotionMatching
                 FeatureSerializer serializer = new FeatureSerializer();
                 if (!serializer.Deserialize(GetAssetPath(), name, this, out FeatureSet))
                 {
-                    Debug.LogError("Failed to read feature set. Creating it in runtime instead.");
+                    Debug.LogWarning("Failed to read feature set. Creating it in runtime instead.");
                     ImportFeatureSet();
 #if UNITY_EDITOR
                     PROFILE.BEGIN_SAMPLE_PROFILING("Feature Serialize");

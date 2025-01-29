@@ -200,19 +200,9 @@ namespace AvatarGoVR
                 }
             }
 
-            m_DoUpdate = true;
             m_IkInfo = ikInfo;
-        }
 
-        private void LateUpdate()
-        {
-            if (!m_DoUpdate)
-            {
-                return;
-            }
-            m_DoUpdate = false;
-
-            void GetCalibrated(Vector3 inPosition, Quaternion inRotation, 
+            void GetCalibrated(Vector3 inPosition, Quaternion inRotation,
                                out Vector3 position, out Quaternion rotation,
                                TrackerCalibration calibration)
             {
@@ -220,12 +210,12 @@ namespace AvatarGoVR
                 rotation = inRotation * calibration.InvInitialRot;
             }
 
-            GetCalibrated(m_IkInfo.HeadPosition, m_IkInfo.HeadRotation, 
+            GetCalibrated(m_IkInfo.HeadPosition, m_IkInfo.HeadRotation,
                           out Vector3 headPosition, out Quaternion headRotation, m_HeadCalibration);
             GetCalibrated(m_IkInfo.HipsPosition, m_IkInfo.HipsRotation,
-                          out Vector3 hipsPosition, out Quaternion hipsRotation, m_HipsCalibration);    
+                          out Vector3 hipsPosition, out Quaternion hipsRotation, m_HipsCalibration);
             GetCalibrated(m_IkInfo.LeftHandPosition, m_IkInfo.LeftHandRotation,
-                          out Vector3 leftHandPosition, out Quaternion leftHandRotation, m_LeftHandCalibration);    
+                          out Vector3 leftHandPosition, out Quaternion leftHandRotation, m_LeftHandCalibration);
             GetCalibrated(m_IkInfo.RightHandPosition, m_IkInfo.RightHandRotation,
                           out Vector3 rightHandPosition, out Quaternion rightHandRotation, m_RightHandCalibration);
             GetCalibrated(m_IkInfo.LeftFootPosition, m_IkInfo.LeftFootRotation,

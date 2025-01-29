@@ -279,7 +279,7 @@ namespace MotionMatching
         {
             SearchTimeLeft = 0; // Force search
         }
-        
+
         private int SearchMotionMatching(int previousSquatIndex)
         {
             // Weights

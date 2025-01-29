@@ -59,7 +59,9 @@ namespace FBIK
                           Target currentHips,
                           Target leftHandTarget,
                           Target rightHandTarget,
-                          bool solveRoot = false)
+                          bool solveRoot = false,
+                          bool solveLeftArm = true,
+                          bool solveRightArm = true)
         {
             Target hipsTarget = currentHips;
             hipsTarget.Rotation = math.mul(hipsTarget.Rotation, math.inverse(InitHips));
@@ -68,8 +70,8 @@ namespace FBIK
             {
                 SolveRoot(hipsTarget);
             }
-            SolveSpine(hipsTarget, headTarget, leftHandTarget, rightHandTarget);
-            SolveArms(hipsTarget, leftHandTarget, rightHandTarget);
+            SolveSpine(hipsTarget, headTarget, leftHandTarget, rightHandTarget, solveLeftArm, solveRightArm);
+            SolveArms(hipsTarget, leftHandTarget, rightHandTarget, solveLeftArm, solveRightArm);
         }
 
         public void Solve(Target headTarget,
@@ -77,12 +79,14 @@ namespace FBIK
                           Target leftHandTarget,
                           Target rightHandTarget,
                           Target leftFootTarget,
-                          Target rightFootTarget)
+                          Target rightFootTarget,
+                          bool solveLeftArm = true,
+                          bool solveRightArm = true)
         {
             SolveRoot(hipsTarget);
-            SolveSpine(hipsTarget, headTarget, leftHandTarget, rightHandTarget);
+            SolveSpine(hipsTarget, headTarget, leftHandTarget, rightHandTarget, solveLeftArm, solveRightArm);
             SolveLegs(hipsTarget, leftFootTarget, rightFootTarget);
-            SolveArms(hipsTarget, leftHandTarget, rightHandTarget);
+            SolveArms(hipsTarget, leftHandTarget, rightHandTarget, solveLeftArm, solveRightArm);
         }
 
         private void InitRoot(Transform[] skeleton, quaternion[] initRotations)
@@ -168,7 +172,7 @@ namespace FBIK
             Head.rotation = math.mul(headTarget.Rotation, InitHead);
         }
 
-        private void SolveSpine(Target hipsTarget, Target headTarget, Target leftHandTarget, Target rightHandTarget)
+        private void SolveSpine(Target hipsTarget, Target headTarget, Target leftHandTarget, Target rightHandTarget, bool solveLeftArm, bool solveRightArm)
         {
             const float maxPercentageHeadToArmLength = 0.25f;
             float3 headTargetPos = CommonSolveSpine(hipsTarget, headTarget);
@@ -176,11 +180,30 @@ namespace FBIK
             float headToRightHand = math.distance((float3)Head.position, rightHandTarget.Position);
             float leftFactor = math.clamp((headToLeftHand - HeadToLeftArmLength) / HeadToLeftArmLength, 0.0f, 1.0f) * maxPercentageHeadToArmLength;
             float rightFactor = math.clamp((headToRightHand - HeadToRightArmLength) / HeadToRightArmLength, 0.0f, 1.0f) * maxPercentageHeadToArmLength;
-            float3 targetPos = headTargetPos * (1.0f - leftFactor - rightFactor) + leftHandTarget.Position * leftFactor + rightHandTarget.Position * rightFactor;
+            float3 targetPos = headTargetPos;
+            if (solveLeftArm && solveRightArm)
+            {
+                targetPos = (float3)Head.position * (1.0f - leftFactor - rightFactor) + leftHandTarget.Position * leftFactor + rightHandTarget.Position * rightFactor;
+            }
+            else if (solveLeftArm)
+            {
+                targetPos = (float3)Head.position * (1.0f - leftFactor) + leftHandTarget.Position * leftFactor;
+                rightFactor = 0.0f;
+            }
+            else if (solveRightArm)
+            {
+                targetPos = (float3)Head.position * (1.0f - rightFactor) + rightHandTarget.Position * rightFactor;
+                leftFactor = 0.0f;
+            }
+            else
+            {
+                rightFactor = 0.0f;
+                leftFactor = 0.0f;
+            }
             float3 hipsTargetRight = math.mul(hipsTarget.Rotation, math.right());
             float3 hipsTargetUp = math.mul(hipsTarget.Rotation, math.up());
             float3 hipsTargetForward = math.mul(hipsTarget.Rotation, math.forward());
-            RotateSpineToHands(hipsTarget, leftHandTarget.Position, rightHandTarget.Position, hipsTargetRight, hipsTargetUp, hipsTargetForward);
+            RotateSpineToHands(hipsTarget, leftHandTarget.Position, rightHandTarget.Position, hipsTargetRight, hipsTargetUp, hipsTargetForward, solveLeftArm, solveRightArm);
             // Rotate Spine with the Head
             // RotationChainIK.Solve(hipsTarget.Rotation, headTarget.Rotation, SpineChain, InitSpineChain, false, true);
             // Translate Spine
@@ -191,18 +214,30 @@ namespace FBIK
         }
 
         private void RotateSpineToHands(Target hipsTarget, float3 leftHandPos, float3 rightHandPos,
-                                        float3 hipsTargetRight, float3 hipsTargetUp, float3 hipsTargetForward)
+                                        float3 hipsTargetRight, float3 hipsTargetUp, float3 hipsTargetForward,
+                                        bool solveLeftArm, bool solveRightArm)
         {
+            if (!solveLeftArm && !solveRightArm)
+            {
+                return;
+            }
             const float maxRotDegrees = 120.0f;
             Plane hipsPlaneZY = new Plane(hipsTargetRight, hipsTarget.Position);
-            float leftHandDist = hipsPlaneZY.GetDistanceToPoint(leftHandPos) + LeftArmLength * 0.3f;
-            float rightHandDist = -hipsPlaneZY.GetDistanceToPoint(rightHandPos) - RightArmLength * 0.3f;
-            float leftHandRot = math.clamp(leftHandDist / (LeftArmLength * 0.75f), 0.0f, 1.0f) * maxRotDegrees;
-            float rightHandRot = -(math.clamp(rightHandDist / (RightArmLength * 0.75f), 0.0f, 1.0f) * maxRotDegrees);
-            float3 forwardLeftHand = Vector3.ProjectOnPlane(leftHandPos - hipsTarget.Position, hipsTargetUp);
-            float3 forwardRightHand = Vector3.ProjectOnPlane(rightHandPos - hipsTarget.Position, hipsTargetUp);
-            float rot = leftHandRot * math.sign(math.dot(hipsTargetForward, forwardLeftHand)) +
-                        rightHandRot * math.sign(math.dot(hipsTargetForward, forwardRightHand));
+            float rot = 0.0f;
+            if (solveLeftArm)
+            {
+                float leftHandDist = hipsPlaneZY.GetDistanceToPoint(leftHandPos) + LeftArmLength * 0.3f;
+                float leftHandRot = math.clamp(leftHandDist / (LeftArmLength * 0.75f), 0.0f, 1.0f) * maxRotDegrees;
+                float3 forwardLeftHand = Vector3.ProjectOnPlane(leftHandPos - hipsTarget.Position, hipsTargetUp);
+                rot = leftHandRot * math.sign(math.dot(hipsTargetForward, forwardLeftHand));
+            }
+            if (solveRightArm)
+            {
+                float rightHandDist = -hipsPlaneZY.GetDistanceToPoint(rightHandPos) - RightArmLength * 0.3f;
+                float rightHandRot = -(math.clamp(rightHandDist / (RightArmLength * 0.75f), 0.0f, 1.0f) * maxRotDegrees);
+                float3 forwardRightHand = Vector3.ProjectOnPlane(rightHandPos - hipsTarget.Position, hipsTargetUp);
+                rot += rightHandRot * math.sign(math.dot(hipsTargetForward, forwardRightHand));
+            }
             quaternion targetRotation = math.mul(quaternion.AxisAngle(hipsTargetUp, math.radians(rot)), hipsTarget.Rotation);
             RotationChainIK.Solve(hipsTarget.Rotation, targetRotation, SpineChain[2..], InitSpineChain[2..], false, true);
         }
@@ -322,7 +357,7 @@ namespace FBIK
                 InitRightArmChain = initRightArmChain.ToArray();
             }
         }
-        private void SolveArms(Target hipsTarget, Target leftHandTarget, Target rightHandTarget)
+        private void SolveArms(Target hipsTarget, Target leftHandTarget, Target rightHandTarget, bool solveLeftArm, bool solveRightArm)
         {
             Debug.Assert(EnabledLeftArmIK && EnabledRightArmIK, "Trying to solve arms IK for an avatar with not all necessary arm joints.");
             static void SolveArm(Target hipsTarget, Target target, quaternion[] init, Transform[] chain)
@@ -349,8 +384,14 @@ namespace FBIK
                     chain[3].rotation = math.mul(target.Rotation, init[3]);
                 }
             }
-            SolveArm(hipsTarget, leftHandTarget, InitLeftArmChain, LeftArmChain);
-            SolveArm(hipsTarget, rightHandTarget, InitRightArmChain, RightArmChain);
+            if (solveLeftArm)
+            {
+                SolveArm(hipsTarget, leftHandTarget, InitLeftArmChain, LeftArmChain);
+            }
+            if (solveRightArm)
+            {
+                SolveArm(hipsTarget, rightHandTarget, InitRightArmChain, RightArmChain);
+            }
         }
 
         public struct Target

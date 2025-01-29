@@ -121,6 +121,7 @@ namespace MotionMatching
         private void OnSkeletonTransformUpdated()
         {
             if (!ShouldRetarget) return;
+
             // Motion
             transform.position = MotionMatching.GetSkeletonTransforms()[0].LocalPosition;
             // Retargeting
@@ -143,7 +144,8 @@ namespace MotionMatching
             }
             // Hips Height
             MotionMatching.GetWorldPosAndRot(MotionMatching.GetSkeletonTransforms()[1], out float3 hipsPos, out _);
-            TargetBones[0].position = hipsPos;
+            TargetBones[0].localPosition = new Vector3(0.0f, hipsPos.y + transform.parent.position.y, 0.0f);
+
             // Correct Toe if under ground
             //Transform leftToes = Animator.GetBoneTransform(HumanBodyBones.LeftToes);
             //if (leftToes.position.y < 0.0f)

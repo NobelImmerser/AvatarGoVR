@@ -38,14 +38,14 @@ namespace AvatarGoVR
         {
             IkInfo info = new()
             {
-                HeadPosition = Head.position,
-                HeadRotation = Head.rotation,
+                HeadPosition = Head != null ? Head.position : Vector3.zero,
+                HeadRotation = Head != null ? Head.rotation : Quaternion.identity,
                 HipsPosition = Hips != null ? Hips.position : Vector3.zero,
                 HipsRotation = Hips != null ? Hips.rotation : Quaternion.identity,
-                LeftHandPosition = LeftHand.position,
-                LeftHandRotation = LeftHand.rotation,
-                RightHandPosition = RightHand.position,
-                RightHandRotation = RightHand.rotation,
+                LeftHandPosition = LeftHand != null ? LeftHand.position : Vector3.zero,
+                LeftHandRotation = LeftHand != null ? LeftHand.rotation : Quaternion.identity,
+                RightHandPosition = RightHand != null ? RightHand.position : Vector3.zero,
+                RightHandRotation = RightHand != null ? RightHand.rotation : Quaternion.identity,
                 LeftFootPosition = LeftFoot != null ? LeftFoot.position : Vector3.zero,
                 LeftFootRotation = LeftFoot != null ? LeftFoot.rotation : Quaternion.identity,
                 RightFootPosition = RightFoot != null ? RightFoot.position : Vector3.zero,
@@ -62,14 +62,14 @@ namespace AvatarGoVR
 
             IkInfo info = new()
             {
-                HeadPosition = Head.position,
-                HeadRotation = Head.rotation,
+                HeadPosition = Head != null ? Head.position : Vector3.zero,
+                HeadRotation = Head != null ? Head.rotation : Quaternion.identity,
                 HipsPosition = Hips != null ? Hips.position : Vector3.zero,
                 HipsRotation = Hips != null ? Hips.rotation : Quaternion.identity,
-                LeftHandPosition = LeftHand.position,
-                LeftHandRotation = LeftHand.rotation,
-                RightHandPosition = RightHand.position,
-                RightHandRotation = RightHand.rotation,
+                LeftHandPosition = LeftHand != null ? LeftHand.position : Vector3.zero,
+                LeftHandRotation = LeftHand != null ? LeftHand.rotation : Quaternion.identity,
+                RightHandPosition = RightHand != null ? RightHand.position : Vector3.zero,
+                RightHandRotation = RightHand != null ? RightHand.rotation : Quaternion.identity,
                 LeftFootPosition = LeftFoot != null ? LeftFoot.position : Vector3.zero,
                 LeftFootRotation = LeftFoot != null ? LeftFoot.rotation : Quaternion.identity,
                 RightFootPosition = RightFoot != null ? RightFoot.position : Vector3.zero,

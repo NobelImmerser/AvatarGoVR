@@ -33,7 +33,6 @@ namespace AvatarGoVR
         [SerializeField]
         private quaternion[] m_DefaultPose;
 
-        private bool m_DoUpdate = false;
         private bool m_WasCalibrated = false;
         private IkInfo m_IkInfo;
 
@@ -126,17 +125,7 @@ namespace AvatarGoVR
                 }
             }
 
-            m_DoUpdate = true;
             m_IkInfo = ikInfo;
-        }
-
-        private void LateUpdate()
-        {
-            if (!m_DoUpdate)
-            {
-                return;
-            }
-            m_DoUpdate = false;
 
             // Set every time because Motion Matching Skinned Mesh Renderer is a MonoBehaviour shared by different animation providers
             if (MotionMatchingSkinnedMeshRenderer.MotionMatching == null ||
@@ -146,7 +135,7 @@ namespace AvatarGoVR
                 MotionMatchingSkinnedMeshRenderer.Enable();
             }
 
-            MotionMatchingController.CurrentHeadHeight = m_IkInfo.HeadPosition.y;
+            MotionMatchingController.CurrentHeadHeight = m_IkInfo.HeadPosition.y - transform.parent.position.y;
 
             float3 bodyOffset = new float3(0.0f, -0.15f, -0.15f);
             float3 bodyCenter = (float3)m_IkInfo.HeadPosition + math.mul(m_IkInfo.HeadRotation, bodyOffset);
@@ -158,7 +147,9 @@ namespace AvatarGoVR
             m_FBIK.Solve(new Target(headPos, m_IkInfo.HeadRotation),
                          new Target(Joints[0].Transform.position, Joints[0].Transform.rotation),
                          new Target(m_IkInfo.LeftHandPosition, lHandRot),
-                         new Target(m_IkInfo.RightHandPosition, rHandRot));
+                         new Target(m_IkInfo.RightHandPosition, rHandRot),
+                         solveLeftArm: m_IkInfo.LeftHandPosition != Vector3.zero || m_IkInfo.LeftHandRotation != Quaternion.identity,
+                         solveRightArm: m_IkInfo.RightHandPosition != Vector3.zero || m_IkInfo.RightHandRotation != Quaternion.identity);
         }
 
         public Transform GetHipsTransform()
