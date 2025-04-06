@@ -209,6 +209,21 @@ namespace FBIK
             // Translate Spine
             CCD.Solve(targetPos, headTarget.Position, (leftFactor + rightFactor) / (maxPercentageHeadToArmLength * 2), SpineChain, SpineWeights, hipsTargetRight, SpineLength, minDegrees: -15.0f, maxDegrees: 15.0f);
             CCD.Solve(targetPos, headTarget.Position, (leftFactor + rightFactor) / (maxPercentageHeadToArmLength * 2), SpineChain, SpineWeights, hipsTargetForward, SpineLength, minDegrees: -8.0f, maxDegrees: 8.0f);
+            if (leftFactor > 0.0f || rightFactor > 0.0f)
+            {
+                // Rotate Neck to the target head
+                // ^1 is the head joint and ^2 is the neck joint
+                float3 currentNeckToHead = math.normalize((float3)Head.position - (float3)SpineChain[^2].position);
+                float3 targetNeckToHead = math.normalize(headTarget.Position - (float3)SpineChain[^2].position);
+                float3 axisRot = math.cross(currentNeckToHead, targetNeckToHead);
+                float angleRot = math.acos(math.clamp(math.dot(currentNeckToHead, targetNeckToHead), -1.0f, 1.0f));
+                angleRot = math.clamp(angleRot, math.radians(-30.0f), math.radians(30.0f)); // clamp to avoid too large rotations
+                if (math.abs(angleRot) > math.radians(0.1f))
+                {
+                    quaternion neckTargetRot = quaternion.AxisAngle(axisRot, angleRot);
+                    SpineChain[^2].rotation = math.mul(neckTargetRot, SpineChain[^2].rotation);
+                }
+            }
             // Rotate Head (force always look at the target head)
             Head.rotation = math.mul(headTarget.Rotation, InitHead);
         }
