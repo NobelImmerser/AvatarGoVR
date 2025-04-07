@@ -286,7 +286,9 @@ namespace MotionMatching
             }
             PROFILE.END_AND_PRINT_SAMPLE_PROFILING("Feature Serialize");
 
+#if UNITY_EDITOR
             AssetDatabase.Refresh();
+#endif
         }
     }
 

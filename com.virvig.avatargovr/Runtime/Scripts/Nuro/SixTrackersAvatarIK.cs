@@ -26,7 +26,6 @@ namespace AvatarGoVR
         [SerializeField]
         private quaternion[] m_DefaultPose;
 
-        private bool m_DoUpdate = false;
         private bool m_WasCalibrated = false;
         private IkInfo m_IkInfo;
 

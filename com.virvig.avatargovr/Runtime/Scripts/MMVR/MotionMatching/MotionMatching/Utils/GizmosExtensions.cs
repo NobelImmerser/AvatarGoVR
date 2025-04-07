@@ -1,5 +1,7 @@
 using System;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace MotionMatching
@@ -8,9 +10,11 @@ namespace MotionMatching
     {
         public static void DrawLine(Vector3 startPosition, Vector3 endPosition, float thickness)
         {
+#if UNITY_EDITOR
             if (Camera.current == null) return;
             float d = Mathf.Min(Vector3.Distance(Camera.current.transform.position, startPosition), Vector3.Distance(Camera.current.transform.position, endPosition));
             Handles.DrawBezier(startPosition, endPosition, startPosition, endPosition, Gizmos.color, null, thickness * Mathf.Min(1.0f, (3.0f / d)));
+#endif
         }
 
         /// <summary>
