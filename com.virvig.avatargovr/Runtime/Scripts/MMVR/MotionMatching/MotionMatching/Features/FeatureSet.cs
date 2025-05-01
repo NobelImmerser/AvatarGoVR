@@ -56,7 +56,7 @@ namespace MotionMatching
             return Valid[featureIndex];
         }
 
-        public void GetFeature(NativeArray<float> feature, int featureIndex)
+        public void GetFeature(ref NativeArray<float> feature, int featureIndex)
         {
             Debug.Assert(feature.Length == FeatureSize, "Feature vector has wrong size");
             for (int i = 0; i < FeatureSize; i++)
@@ -131,11 +131,23 @@ namespace MotionMatching
         public void SetValid(NativeArray<bool> valid)
         {
             Debug.Assert(valid.Length == NumberFeatureVectors, "Valid array has wrong size");
+
+            if (Valid != null && Valid.IsCreated)
+            {
+                Valid.Dispose();
+            }
+
             Valid = valid;
         }
         public void SetFeatures(NativeArray<float> features)
         {
             Debug.Assert(features.Length == NumberFeatureVectors * FeatureSize, "Feature vector has wrong size");
+
+            if (Features != null && Features.IsCreated)
+            {
+                Features.Dispose();
+            }
+
             Features = features;
         }
         public void SetMean(float[] mean)
@@ -153,7 +165,7 @@ namespace MotionMatching
         /// <summary>
         /// Normalizes the trajectory features (pose features remaing untouched)
         /// </summary>
-        public void NormalizeTrajectory(NativeArray<float> featureVector)
+        public void NormalizeTrajectory(ref NativeArray<float> featureVector)
         {
             Debug.Assert(Mean != null, "Mean is not initialized");
             Debug.Assert(StandardDeviation != null, "StandardDeviation is not initialized");
@@ -168,7 +180,7 @@ namespace MotionMatching
         /// <summary>
         /// Normalizes all features (trajectory + pose)
         /// </summary>
-        public void NormalizeFeatureVector(NativeArray<float> featureVector)
+        public void NormalizeFeatureVector(ref NativeArray<float> featureVector)
         {
             Debug.Assert(Mean != null, "Mean is not initialized");
             Debug.Assert(StandardDeviation != null, "StandardDeviation is not initialized");
@@ -264,35 +276,54 @@ namespace MotionMatching
             }
 
             // Compute Standard Deviations of a feature as the average std across all dimensions - std = sqrt(variance)
+            //for (int d = 0; d < NumberTrajectoryFeatures; d++)
+            //{
+            //    int offset = TrajectoryOffset[d];
+            //    int nDimensions = NumberPredictionsTrajectory[d] * NumberFloatsTrajectory[d];
+            //    float std = 0;
+            //    for (int j = 0; j < nDimensions; j++)
+            //    {
+            //        std += math.sqrt(variance[offset + j]);
+            //    }
+            //    std /= nDimensions;
+            //    Debug.Assert(std > 0, "Standard deviation is zero, feature with no variation is probably a bug");
+            //    for (int j = 0; j < nDimensions; j++)
+            //    {
+            //        StandardDeviation[offset + j] = std;
+            //    }
+            //}
+            //for (int d = 0; d < NumberPoseFeatures; d++)
+            //{
+            //    int offset = PoseOffset + d * NumberFloatsPose;
+            //    float std = 0;
+            //    for (int j = 0; j < NumberFloatsPose; j++)
+            //    {
+            //        std += math.sqrt(variance[offset + j]);
+            //    }
+            //    std /= NumberFloatsPose;
+            //    Debug.Assert(std > 0, "Standard deviation is zero, feature with no variation is probably a bug");
+            //    for (int j = 0; j < NumberFloatsPose; j++)
+            //    {
+            //        StandardDeviation[offset + j] = std;
+            //    }
+            //}
+
+            // Compute Standard Deviations of a feature as the sqrt(variance) for each dimension
             for (int d = 0; d < NumberTrajectoryFeatures; d++)
             {
                 int offset = TrajectoryOffset[d];
                 int nDimensions = NumberPredictionsTrajectory[d] * NumberFloatsTrajectory[d];
-                float std = 0;
                 for (int j = 0; j < nDimensions; j++)
                 {
-                    std += math.sqrt(variance[offset + j]);
-                }
-                std /= nDimensions;
-                Debug.Assert(std > 0, "Standard deviation is zero, feature with no variation is probably a bug");
-                for (int j = 0; j < nDimensions; j++)
-                {
-                    StandardDeviation[offset + j] = std;
+                    StandardDeviation[offset + j] = math.sqrt(variance[offset + j]);
                 }
             }
             for (int d = 0; d < NumberPoseFeatures; d++)
             {
                 int offset = PoseOffset + d * NumberFloatsPose;
-                float std = 0;
                 for (int j = 0; j < NumberFloatsPose; j++)
                 {
-                    std += math.sqrt(variance[offset + j]);
-                }
-                std /= NumberFloatsPose;
-                Debug.Assert(std > 0, "Standard deviation is zero, feature with no variation is probably a bug");
-                for (int j = 0; j < NumberFloatsPose; j++)
-                {
-                    StandardDeviation[offset + j] = std;
+                    StandardDeviation[offset + j] = math.sqrt(variance[offset + j]);
                 }
             }
         }
@@ -354,6 +385,11 @@ namespace MotionMatching
                 int featureSize = NumberPredictionsTrajectory[i] * NumberFloatsTrajectory[i];
                 for (int p = 0; p < trajectoryFeature.FramesPrediction.Length; ++p)
                 {
+                    if (poseIndex + trajectoryFeature.FramesPrediction[p] >= poseSet.NumberPoses)
+                    {
+                        Debug.LogWarning("Out-of-bounds pose access in trajectory feature.");
+                        continue;
+                    }
                     int predictionOffset = featureOffset + p * NumberFloatsTrajectory[i];
                     poseSet.GetPose(poseIndex + trajectoryFeature.FramesPrediction[p], out PoseVector futurePose);
                     float3 value = new float3();
