@@ -298,7 +298,7 @@ namespace MotionMatching
             }
 
             // Init Query Vector (with previous information)
-            previousFeatureSet.GetFeature(QueryFeature, CurrentFrame);
+            previousFeatureSet.GetFeature(ref QueryFeature, CurrentFrame);
             previousFeatureSet.DenormalizeFeatureVector(QueryFeature);
             // Now Current Feature Set
             currentFeatureSet.NormalizeFeatureVector(QueryFeature);
